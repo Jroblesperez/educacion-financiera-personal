@@ -42,6 +42,28 @@ function Reportes() {
     ]
   };
 
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          padding: 20
+        }
+      }
+    },
+    layout: {
+      padding: {
+        top: 12,
+        right: 12,
+        left: 12,
+        bottom: 12
+      }
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="rounded-2xl bg-white p-8 shadow">
@@ -49,7 +71,9 @@ function Reportes() {
         <p className="mb-6 text-sm text-slate-500">
           Observa la evolución de tus ingresos y egresos durante los últimos meses.
         </p>
-        <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false }} height={320} />
+        <div className="relative h-80 w-full">
+          <Bar data={barData} options={barOptions} />
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
