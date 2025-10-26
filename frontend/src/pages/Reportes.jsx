@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef } from 'react';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -13,56 +14,125 @@ import { gastosPorCategoria, reportesMensuales } from '../data/mockData.js';
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 function Reportes() {
-  const barData = {
-    labels: reportesMensuales.map((item) => item.mes),
-    datasets: [
-      {
-        label: 'Ingresos',
-        data: reportesMensuales.map((item) => item.ingresos),
-        backgroundColor: '#22c55e',
-        borderRadius: 8
+  const barChartRef = useRef(null);
+
+  const barData = useMemo(
+    () => ({
+      labels: reportesMensuales.map((item) => item.mes),
+      datasets: [
+        {
+          label: 'Ingresos',
+          data: reportesMensuales.map((item) => item.ingresos),
+          backgroundColor: '#22c55e',
+          borderRadius: 8,
+          maxBarThickness: 48
+        },
+        {
+          label: 'Egresos',
+          data: reportesMensuales.map((item) => item.egresos),
+          backgroundColor: '#ef4444',
+          borderRadius: 8,
+          maxBarThickness: 48
+        }
+      ]
+    }),
+    []
+  );
+
+  const doughnutData = useMemo(
+    () => ({
+      labels: gastosPorCategoria.map((item) => item.categoria),
+      datasets: [
+        {
+          data: gastosPorCategoria.map((item) => item.monto),
+          backgroundColor: ['#2563eb', '#22c55e', '#f97316', '#a855f7'],
+          borderWidth: 0
+        }
+      ]
+    }),
+    []
+  );
+
+  const barOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      resizeDelay: 200,
+      animations: {
+        resize: {
+          duration: 0
+        }
       },
-      {
-        label: 'Egresos',
-        data: reportesMensuales.map((item) => item.egresos),
-        backgroundColor: '#ef4444',
-        borderRadius: 8
-      }
-    ]
-  };
-
-  const doughnutData = {
-    labels: gastosPorCategoria.map((item) => item.categoria),
-    datasets: [
-      {
-        data: gastosPorCategoria.map((item) => item.monto),
-        backgroundColor: ['#2563eb', '#22c55e', '#f97316', '#a855f7'],
-        borderWidth: 0
-      }
-    ]
-  };
-
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          padding: 20
+      plugins: {
+        legend: {
+          position: 'bottom',
+          align: 'center',
+          labels: {
+            usePointStyle: true,
+            padding: 20
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) =>
+              `${context.dataset.label}: ${new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                maximumFractionDigits: 0
+              }).format(context.parsed.y)}`
+          }
+        }
+      },
+      layout: {
+        padding: {
+          top: 12,
+          right: 16,
+          left: 16,
+          bottom: 16
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value) =>
+              new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                maximumFractionDigits: 0
+              }).format(value)
+          }
         }
       }
-    },
-    layout: {
-      padding: {
-        top: 12,
-        right: 12,
-        left: 12,
-        bottom: 12
+    }),
+    []
+  );
+
+  useEffect(() => {
+    const chartInstance = barChartRef.current;
+    if (!chartInstance) return;
+
+    const canvas = chartInstance.canvas;
+    if (!canvas) return;
+
+    const blurOnFocus = () => {
+      if (document.activeElement === canvas) {
+        canvas.blur();
       }
-    }
-  };
+    };
+
+    blurOnFocus();
+    canvas.addEventListener('focus', blurOnFocus);
+
+    return () => {
+      canvas.removeEventListener('focus', blurOnFocus);
+    };
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -71,8 +141,10 @@ function Reportes() {
         <p className="mb-6 text-sm text-slate-500">
           Observa la evolución de tus ingresos y egresos durante los últimos meses.
         </p>
-        <div className="relative h-80 w-full">
-          <Bar data={barData} options={barOptions} />
+        <div className="relative w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-50/40 p-4">
+          <div className="relative h-[22rem] w-full">
+            <Bar ref={barChartRef} data={barData} options={barOptions} />
+          </div>
         </div>
       </div>
 
