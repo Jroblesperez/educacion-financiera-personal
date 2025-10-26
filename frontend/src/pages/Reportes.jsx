@@ -1,43 +1,33 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { Bar, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import { useMemo } from 'react';
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { gastosPorCategoria, reportesMensuales } from '../data/mockData.js';
 
-ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 function Reportes() {
-  const barChartRef = useRef(null);
+  const resumenMensual = useMemo(() => {
+    const maxTotal = Math.max(
+      ...reportesMensuales.map((item) => item.ingresos + item.egresos)
+    );
 
-  const barData = useMemo(
-    () => ({
-      labels: reportesMensuales.map((item) => item.mes),
-      datasets: [
-        {
-          label: 'Ingresos',
-          data: reportesMensuales.map((item) => item.ingresos),
-          backgroundColor: '#22c55e',
-          borderRadius: 8,
-          maxBarThickness: 48
-        },
-        {
-          label: 'Egresos',
-          data: reportesMensuales.map((item) => item.egresos),
-          backgroundColor: '#ef4444',
-          borderRadius: 8,
-          maxBarThickness: 48
-        }
-      ]
-    }),
-    []
-  );
+    return reportesMensuales.map((item) => {
+      const total = item.ingresos + item.egresos;
+      const balance = item.ingresos - item.egresos;
+      const balanceEsPositivo = balance >= 0;
+      const porcentajeIngresos = Math.round((item.ingresos / maxTotal) * 100);
+      const porcentajeEgresos = Math.round((item.egresos / maxTotal) * 100);
+
+      return {
+        ...item,
+        total,
+        balance,
+        balanceEsPositivo,
+        porcentajeIngresos,
+        porcentajeEgresos
+      };
+    });
+  }, []);
 
   const doughnutData = useMemo(
     () => ({
@@ -53,87 +43,6 @@ function Reportes() {
     []
   );
 
-  const barOptions = useMemo(
-    () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      resizeDelay: 200,
-      animations: {
-        resize: {
-          duration: 0
-        }
-      },
-      plugins: {
-        legend: {
-          position: 'bottom',
-          align: 'center',
-          labels: {
-            usePointStyle: true,
-            padding: 20
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: (context) =>
-              `${context.dataset.label}: ${new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                maximumFractionDigits: 0
-              }).format(context.parsed.y)}`
-          }
-        }
-      },
-      layout: {
-        padding: {
-          top: 12,
-          right: 16,
-          left: 16,
-          bottom: 16
-        }
-      },
-      scales: {
-        x: {
-          grid: {
-            display: false
-          }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: (value) =>
-              new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                maximumFractionDigits: 0
-              }).format(value)
-          }
-        }
-      }
-    }),
-    []
-  );
-
-  useEffect(() => {
-    const chartInstance = barChartRef.current;
-    if (!chartInstance) return;
-
-    const canvas = chartInstance.canvas;
-    if (!canvas) return;
-
-    const blurOnFocus = () => {
-      if (document.activeElement === canvas) {
-        canvas.blur();
-      }
-    };
-
-    blurOnFocus();
-    canvas.addEventListener('focus', blurOnFocus);
-
-    return () => {
-      canvas.removeEventListener('focus', blurOnFocus);
-    };
-  }, []);
-
   return (
     <div className="space-y-8">
       <div className="rounded-2xl bg-white p-8 shadow">
@@ -141,10 +50,87 @@ function Reportes() {
         <p className="mb-6 text-sm text-slate-500">
           Observa la evolución de tus ingresos y egresos durante los últimos meses.
         </p>
-        <div className="relative w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-50/40 p-4">
-          <div className="relative h-[22rem] w-full">
-            <Bar ref={barChartRef} data={barData} options={barOptions} />
-          </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {resumenMensual.map((item) => (
+            <div
+              key={item.mes}
+              className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-slate-50/40 p-5"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">{item.mes}</p>
+                  <p className="text-xs text-slate-400">Total movido</p>
+                </div>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    item.balanceEsPositivo
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-rose-100 text-rose-700'
+                  }`}
+                >
+                  {item.balanceEsPositivo ? 'Superávit' : 'Déficit'}
+                </span>
+              </div>
+              <div className="space-y-2 text-sm text-slate-600">
+                <div className="flex items-center justify-between">
+                  <span>Ingresos</span>
+                  <span className="font-semibold text-emerald-600">
+                    {new Intl.NumberFormat('es-CO', {
+                      style: 'currency',
+                      currency: 'COP',
+                      maximumFractionDigits: 0
+                    }).format(item.ingresos)}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-emerald-100">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all"
+                    style={{ width: `${item.porcentajeIngresos}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Egresos</span>
+                  <span className="font-semibold text-rose-600">
+                    {new Intl.NumberFormat('es-CO', {
+                      style: 'currency',
+                      currency: 'COP',
+                      maximumFractionDigits: 0
+                    }).format(item.egresos)}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-rose-100">
+                  <div
+                    className="h-full rounded-full bg-rose-500 transition-all"
+                    style={{ width: `${item.porcentajeEgresos}%` }}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs uppercase tracking-wide text-slate-400">
+                <span>Total movido</span>
+                <span className="font-semibold text-slate-500">
+                  {new Intl.NumberFormat('es-CO', {
+                    style: 'currency',
+                    currency: 'COP',
+                    maximumFractionDigits: 0
+                  }).format(item.total)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500">Balance neto</span>
+                <span
+                  className={`font-semibold ${
+                    item.balanceEsPositivo ? 'text-emerald-600' : 'text-rose-600'
+                  }`}
+                >
+                  {new Intl.NumberFormat('es-CO', {
+                    style: 'currency',
+                    currency: 'COP',
+                    maximumFractionDigits: 0
+                  }).format(item.balance)}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
