@@ -30,6 +30,14 @@ export const transacciones = [
     categoria: 'Alimentación',
     fecha: '2023-10-02',
     descripcion: 'Mercado semanal'
+  },
+  {
+    id: 5,
+    tipo: 'ingreso',
+    monto: 300000,
+    categoria: 'Ahorro',
+    fecha: '2023-10-03',
+    descripcion: 'Aporte a fondo de emergencia'
   }
 ];
 

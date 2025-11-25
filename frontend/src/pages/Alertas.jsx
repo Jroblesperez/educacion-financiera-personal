@@ -8,7 +8,8 @@ const categoriasAlertas = [
   { label: 'Arriendo', value: 'Arriendo' },
   { label: 'Transporte', value: 'Transporte' },
   { label: 'Alimentación', value: 'Alimentación' },
-  { label: 'Ocio', value: 'Ocio' }
+  { label: 'Ocio', value: 'Ocio' },
+  { label: 'Ahorro', value: 'Ahorro' }
 ];
 
 function Alertas() {
@@ -47,10 +48,37 @@ function Alertas() {
 
   return (
     <div className="space-y-8">
+      <div className="rounded-2xl border border-amber-100 bg-amber-50 p-6 shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-amber-600 shadow">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M12 6v4m0 0a2 2 0 100 4h.01M12 10h2.4a2.6 2.6 0 110 5.2H12m0 0H9.6"
+              />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Alertas enfocadas en ahorro</p>
+            <p className="text-xs text-amber-700">
+              Mantén un ojo en tus aportes a ahorro y evita descuidar el fondo de emergencias. Define umbrales para no gastar más de lo planeado en categorías clave.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-2xl bg-white p-8 shadow">
         <h2 className="text-xl font-semibold text-slate-800">Configura alertas</h2>
         <p className="mb-6 text-sm text-slate-500">
-          Define umbrales para recibir notificaciones cuando tus gastos superen el límite definido.
+          Define umbrales para recibir notificaciones cuando tus gastos superen el límite definido. Usa "Ahorro" para proteger tus metas.
         </p>
         <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-3">
           <Select
